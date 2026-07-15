@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f4f78">
+<title>차량 운행 보고서 생성기</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;color:#17202a;background:#eef3f7}
+*{box-sizing:border-box}body{margin:0}.wrap{max-width:760px;margin:auto;padding:20px 14px 48px}.hero{padding:22px 20px;background:linear-gradient(145deg,#173b5c,#2d6e9f);color:white;border-radius:22px;box-shadow:0 12px 32px #173b5c30}.hero h1{font-size:1.55rem;margin:0 0 7px}.hero p{margin:0;opacity:.88;line-height:1.55}.card{background:white;border-radius:18px;padding:18px;margin-top:14px;box-shadow:0 6px 22px #23415a12}.card h2{font-size:1.05rem;margin:0 0 14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}label{display:block;font-size:.82rem;font-weight:700;margin:0 0 6px;color:#3e5365}input,textarea,select{width:100%;border:1px solid #ccd7df;border-radius:11px;padding:12px;font-size:16px;background:#fbfdff;color:#17202a;outline:none}input:focus,textarea:focus,select:focus{border-color:#3178a8;box-shadow:0 0 0 3px #3178a820}textarea{min-height:130px;resize:vertical}.filebox{border:2px dashed #9fb8ca;background:#f5f9fc;border-radius:14px;padding:16px;text-align:center}.filebox input{border:0;background:transparent;padding:4px}.hint{font-size:.78rem;color:#6b7e8d;line-height:1.45;margin-top:7px}.advanced summary{cursor:pointer;font-weight:700;padding:2px 0}.advanced .grid{margin-top:14px}.actions{position:sticky;bottom:0;padding:12px 0;background:linear-gradient(transparent,#eef3f7 28%)}button{width:100%;border:0;border-radius:14px;padding:15px 18px;font-size:1.02rem;font-weight:800;background:#21679a;color:white;box-shadow:0 8px 18px #21679a45;cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}.status{display:none;margin-top:12px;padding:12px;border-radius:12px;line-height:1.45}.status.show{display:block}.status.ok{background:#eaf7ef;color:#176235}.status.err{background:#fff0f0;color:#9a2c2c}.status.info{background:#edf5fb;color:#285b7c}.privacy{font-size:.77rem;color:#607485;text-align:center;line-height:1.5;margin-top:12px}@media(max-width:560px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.hero{border-radius:18px}.wrap{padding-top:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>차량 운행 보고서 생성기</h1>
+    <p>카카오톡 내보내기 TXT를 선택하면 v3.94 기준의 차량 운행 엑셀을 휴대폰에서 바로 생성합니다.</p>
+  </section>
+
+  <section class="card">
+    <h2>1. 카카오톡 자료</h2>
+    <div class="filebox">
+      <input id="file" type="file" accept=".txt,text/plain">
+      <div class="hint">카카오톡 대화 내보내기 TXT 파일을 선택하세요.</div>
+    </div>
+    <div style="height:12px"></div>
+    <label for="text">또는 내용 직접 붙여넣기</label>
+    <textarea id="text" placeholder="[닉네임] [오후 1:16] [차량 운행 현황]&#10;&#10;일자: '26. 6. 29.(월)&#10;운전자: 6급 홍길동&#10;..."></textarea>
+  </section>
+
+  <section class="card">
+    <h2>2. 생성 조건</h2>
+    <div class="grid">
+      <div><label for="year">대상 연도</label><input id="year" type="number" min="2000" max="2100"></div>
+      <div><label for="month">대상 월</label><select id="month"></select></div>
+      <div class="full"><label for="unit">부대명 / 부서명</label><input id="unit" value=""></div>
+      <div><label for="avante">아반떼 차량번호</label><input id="avante" value=""></div>
+      <div><label for="morning">모닝 차량번호</label><input id="morning" value=""></div>
+    </div>
+  </section>
+
+  <section class="card advanced">
+    <details>
+      <summary>고급 판정 설정</summary>
+      <div class="grid">
+        <div><label>과다 감소 배율</label><input id="multiplier" type="number" step="0.01" value="1.35"></div>
+        <div><label>기본 여유(km)</label><input id="margin" type="number" step="1" value="10"></div>
+        <div><label>과다운전 기준(km)</label><input id="overdrive" type="number" value="40"></div>
+        <div><label>기본 의심지수</label><input id="baseSuspicion" type="number" step="0.01" value="2.0"></div>
+        <div><label>보정 최대폭</label><input id="correctionWidth" type="number" step="0.01" value="0.4"></div>
+        <div><label>보정 민감도</label><input id="correctionSensitivity" type="number" step="0.1" value="4.5"></div>
+        <div><label>오프셋 기준거리(km)</label><input id="offsetDistance" type="number" value="10"></div>
+        <div><label>최소 정상 기록 수</label><input id="minRecords" type="number" value="5"></div>
+        <div><label>최근 정상 기록 수</label><input id="recentRecords" type="number" value="10"></div>
+      </div>
+    </details>
+  </section>
+
+  <div id="status" class="status info"></div>
+  <div class="actions"><button id="generate" disabled>엔진 불러오는 중…</button></div>
+  <div class="privacy">입력한 카카오톡 자료는 서버로 전송되지 않고 이 기기 안에서만 처리됩니다.</div>
+</div>
+<script src="wasm_exec.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const now=new Date(); $('year').value=now.getFullYear();
+for(let m=1;m<=12;m++){const o=document.createElement('option');o.value=m;o.textContent=m+'월';if(m===now.getMonth()+1)o.selected=true;$('month').appendChild(o)}
+function status(msg,type='info'){const s=$('status');s.className='status show '+type;s.textContent=msg}
+$('file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{$('text').value=await f.text();status(`${f.name}을 불러왔습니다.`,'ok')}catch(err){status('파일을 읽지 못했습니다: '+err.message,'err')}});
+function num(id){return Number($(id).value)}
+function b64ToBlob(b64,type){const bin=atob(b64),len=bin.length,bytes=new Uint8Array(len);for(let i=0;i<len;i++)bytes[i]=bin.charCodeAt(i);return new Blob([bytes],{type})}
+$('generate').addEventListener('click',()=>{
+  const text=$('text').value.trim(); if(!text){status('카카오톡 TXT 파일을 선택하거나 내용을 붙여넣어 주세요.','err');return}
+  $('generate').disabled=true;$('generate').textContent='엑셀 생성 중…';status('자료를 분석하고 엑셀을 만드는 중입니다.','info');
+  setTimeout(()=>{try{
+    const req={text,year:num('year'),month:num('month'),unitDepartment:$('unit').value,avanteNumber:$('avante').value,morningNumber:$('morning').value,multiplier:num('multiplier'),marginKm:num('margin'),overdriveKm:num('overdrive'),baseSuspicionIndex:num('baseSuspicion'),correctionWidth:num('correctionWidth'),correctionSensitivity:num('correctionSensitivity'),offsetBaseDistance:num('offsetDistance'),minBaseRecords:num('minRecords'),recentBaseRecords:num('recentRecords')};
+    const res=JSON.parse(window.vehicleManagerGenerateExcel(JSON.stringify(req)));
+    if(!res.ok) throw new Error(res.error||'알 수 없는 오류');
+    const blob=b64ToBlob(res.base64,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=res.fileName;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+    status(`${res.recordCount}건을 반영한 ${res.fileName} 다운로드를 시작했습니다.`,'ok');
+  }catch(err){status(err.message,'err')}finally{$('generate').disabled=false;$('generate').textContent='엑셀 파일 생성'}} ,30)
+});
+(async()=>{try{const go=new Go();const result=await WebAssembly.instantiateStreaming(fetch('vehicle_manager.wasm?v=394'),go.importObject);go.run(result.instance);$('generate').disabled=false;$('generate').textContent='엑셀 파일 생성';status('웹앱 준비가 완료되었습니다.','ok')}catch(err){console.error(err);status('웹앱 엔진을 불러오지 못했습니다. 웹서버에 올려 실행해 주세요.','err')}})();
+</script>
+</body></html>
